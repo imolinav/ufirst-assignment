@@ -124,6 +124,10 @@
           }
         }
       }
-    }},
-  "defaultProject": "ufirst-assignment"
+    }
+  },
+  "defaultProject": "ufirst-assignment",
+  "cli": {
+    "analytics": "fe15593e-3676-42c7-b6a0-52402ac07539"
+  }
 }
