@@ -30,8 +30,44 @@ export class MainComponent implements OnInit {
 
   ngOnInit() {
     console.log(data);
+
+    let curr_date = '';
+    let curr_min = '';
+    let mins = 0;
     
     for(let item of this.items) {
+
+      if(curr_min == '') {
+        curr_min = item['datetime']['minute'];
+      }
+
+      if(Number(item['datetime']['minute']) - Number(curr_min) > 1) {
+        for(let i = 0; i < Number(item['datetime']['minute']) - Number(curr_min) - 1; i++) {
+          mins++;
+          this.data_chart_1.push({y: 0, x: mins});
+        }
+      }
+
+      if(Number(item['datetime']['minute']) - Number(curr_min) < 0) {
+        let cant = (59 - Number(curr_min) + Number(item['datetime']['minute']) - 1);
+        for(let j = 0; j < cant; j++) {
+          mins++;
+          this.data_chart_1.push({y: 0, x: mins});
+        }
+      }
+
+      if(curr_min !== item['datetime']['minute']) {
+        curr_min = item['datetime']['minute'];
+      }
+
+      let item_time = item['datetime']['day'] + item['datetime']['hour'] + item['datetime']['minute'];
+      
+      if(item_time !== curr_date) {
+        curr_date = item_time, mins++;
+      }
+
+      let obj_1 = this.data_chart_1.find(o => o.x == mins);
+      obj_1 ? obj_1.y++ : this.data_chart_1.push({y: 1, x: mins});
 
       let label: string = item['request']['method'] ? item['request']['method'] : 'Invalid';
       let obj_2 = this.data_chart_2.find(o => o.label == label);
@@ -46,6 +82,8 @@ export class MainComponent implements OnInit {
       }
       
     }
+
+    console.log(this.data_chart_1);
     
   }
 
