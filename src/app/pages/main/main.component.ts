@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import * as data from '../../../../data-import/data.json';
+import * as CanvasJS from '../../../assets/js/canvasjs.min';
 
 @Component({
   selector: 'app-main',
@@ -64,9 +65,9 @@ export class MainComponent implements OnInit {
       let obj_1 = this.data_chart_1.find(o => o.x == mins);
       obj_1 ? obj_1.y++ : this.data_chart_1.push({y: 1, x: mins});
 
-      let label: string = item['request']['method'] ? item['request']['method'] : 'Invalid';
-      let obj_2 = this.data_chart_2.find(o => o.label == label);
-      obj_2 ? obj_2.y++ : this.data_chart_2.push({y: 1, label: label});
+      let name: string = item['request']['method'] ? item['request']['method'] : 'Invalid';
+      let obj_2 = this.data_chart_2.find(o => o.name == name);
+      obj_2 ? obj_2.y++ : this.data_chart_2.push({y: 1, name: name});
 
       let obj_3 = this.data_chart_3.find(o => o.label == item['response_code']);
       obj_3 ? obj_3.y++ : this.data_chart_3.push({y: 1, label: item['response_code']});
@@ -78,7 +79,95 @@ export class MainComponent implements OnInit {
       
     }
 
-    console.log(this.data_chart_1);
+    this.data_chart_2.sort((a, b) => (a.y > b.y) ? 1 : -1);
+
+    let chart_2_breaks = [];
+    for(let [index, curr] of this.data_chart_2.entries()) {
+      if(this.data_chart_2[index + 1]) {
+        chart_2_breaks.push({
+          startValue: curr.y + 50,
+          endValue: this.data_chart_2[index + 1].y - 50
+        });
+      }
+    }
+
+    let chart_1 = new CanvasJS.Chart('chartContainer1', {
+      theme: 'light2',
+      animationEnabled: true,
+      zoomEnabled: true,
+      title: {
+        text: 'Requests per minute (avg: ' + (Math.round((this.items.length/this.data_chart_1.length) * 100) / 100) + ')'
+      },
+      data: [{
+        type: 'line',
+        dataPoints: this.data_chart_1
+      }],
+      axisY: {
+        lineThickness: 1,
+        stripLines: [{
+          value: this.items.length/this.data_chart_1.length,
+          label: 'Average: ' + (Math.round((this.items.length/this.data_chart_1.length) * 100) / 100)
+        }]
+      }
+    });
+
+    let chart_2 = new CanvasJS.Chart('chartContainer2', {
+      theme: 'light2',
+      animationEnabled: true,
+      title: {
+        text: 'Distribution of HTTP methods'
+      },
+      axisY: {
+        scaleBreaks: {
+          customBreaks: chart_2_breaks
+        }
+      },
+      data: [{
+        type: 'column',
+        tooltipContent: '<b>{name}</b>: {y} - #percent%',
+        indexLabel: '{name}: {y}',
+        dataPoints: this.data_chart_2
+      }]
+    });
+
+    let chart_3 = new CanvasJS.Chart('chartContainer3', {
+      theme: 'light2',
+      animationEnabled: true,
+      title: {
+        text: 'Distribution of HTTP answer codes'
+      },
+      showInLegend: true,
+      legendText: '{label}',
+      data: [{
+        type: 'pie',
+        toolTipContent: '<b>{label}</b>: {y}',
+        indexLabel: '{label}: #percent%',
+        dataPoints: this.data_chart_3
+      }]
+    });
+
+    let chart_4 = new CanvasJS.Chart('chartContainer4', {
+      theme: 'light2',
+      animationEnabled: true,
+      axisY :{
+        includeZero:false
+      },
+      title: {
+        text: 'Size of requests with code 200 and size < 1000B'
+      },
+      data: [{
+        type: 'spline',
+        xValueFormatString: "#B",
+        dataPoints: this.data_chart_4
+      }]
+    });
+
+    chart_1.render();
+    chart_2.render();
+    chart_3.render();
+    chart_4.render();
+
+    console.log(chart_2_breaks);
     
   }
 
