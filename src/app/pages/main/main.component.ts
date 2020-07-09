@@ -32,25 +32,20 @@ export class MainComponent implements OnInit {
     console.log(data);
 
     let curr_date = '';
-    let curr_min = '';
-    let mins = 0;
+    let curr_min: number = Number(this.items[0]['datetime']['minute']);
+    let mins = 0;    
     
     for(let item of this.items) {
 
-      if(curr_min == '') {
-        curr_min = item['datetime']['minute'];
-      }
-
-      if(Number(item['datetime']['minute']) - Number(curr_min) > 1) {
-        for(let i = 0; i < Number(item['datetime']['minute']) - Number(curr_min) - 1; i++) {
+      if(Number(item['datetime']['minute']) - curr_min > 1) {
+        for(let i = 0; i<Number(item['datetime']['minute']) - curr_min - 1; i++) {
           mins++;
           this.data_chart_1.push({y: 0, x: mins});
         }
       }
 
-      if(Number(item['datetime']['minute']) - Number(curr_min) < 0) {
-        let cant = (59 - Number(curr_min) + Number(item['datetime']['minute']) - 1);
-        for(let j = 0; j < cant; j++) {
+      if(Number(item['datetime']['minute']) - curr_min < 0) {
+        for(let j = 0; j<(59 - curr_min + Number(item['datetime']['minute'])); j++) {
           mins++;
           this.data_chart_1.push({y: 0, x: mins});
         }
@@ -85,6 +80,10 @@ export class MainComponent implements OnInit {
 
     console.log(this.data_chart_1);
     
+  }
+
+  redistribute(event) {
+    console.log(event);
   }
 
 }
