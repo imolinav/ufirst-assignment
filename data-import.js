@@ -3,7 +3,7 @@
  * Data loading script
  * -------------------
  * Description: opens the file "epa-http.txt" and splits it on line breaks. 
- * Then for each item it gets the different properties and reformats them into a new json element, which then pushes into an array.
+ * Then for each item it cleans the string, gets the different properties and reformats them into a new json element, which then pushes into an array.
  * 
  */
 
@@ -18,7 +18,10 @@ fs.readFile('data-import/epa-http.txt', 'utf8', function (err, data) {
     for(let [index, value] of data.entries()) {
         if(value == '') {
             continue;
-        }     
+        }
+
+        value = value.replace(/[^\x20-\x7E]/g, '');
+
         let item_data = value.split(' ');
         let datetime = value.match(/\[(.*?)\]/)[1].split(':');
         let request = value.match(/\"(.*?)\"/)[1];
