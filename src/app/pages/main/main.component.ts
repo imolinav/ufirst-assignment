@@ -1,3 +1,22 @@
+/**
+ * 
+ * Documentation:
+ * -------------
+ * Imports data from the json file.
+ * Imports CanvasJs from the js file.
+ * Iterates the data from the json, mounting the data arrays in the following ways:
+ *  - For the first chart, it looks at the combo of day, hour, min to get every singular unrepeated minute. 
+ *    It also checks if the difference between minutes is greater than 1 or smaller than 0 and fills the empty minutes consequently.
+ *  - For the second one it checks if the item has method, and if not it fills it as 'Invalid'.
+ *    It also orders the array by quantity of items, to mount the table in ascendent order and mount the breaks.
+ *  - For the third one it just filters by the response code.
+ *  - For the forth one it checks if it has a size smaller than 1000B and if the code is 200.
+ *    It then group the results into hundreds (if not we ended with lot's of singular values, having no real representation).
+ * 
+ * Passes the arrays to the functions that render the charts into the given ids. 
+ * 
+ */
+
 import { Component, OnInit } from '@angular/core';
 import * as data from '../../../../data-import/data.json';
 import * as CanvasJS from '../../../assets/js/canvasjs.min';
@@ -10,6 +29,8 @@ import * as CanvasJS from '../../../assets/js/canvasjs.min';
 export class MainComponent implements OnInit {
 
   items: any = (data as any).default;
+
+  
 
   data_chart_1 = [];
   data_chart_2 = [];
@@ -30,7 +51,7 @@ export class MainComponent implements OnInit {
   constructor() { }
 
   ngOnInit() {
-    console.log(data);
+    CanvasJS.addColorSet('color_palette', ['#ffa600', '#ff7c43', '#f95d6a', '#d45087', '#a05195', '#665191', '#2f4b7c', '#003f5c']);
 
     let curr_date = '';
     let curr_min: number = Number(this.items[0]['datetime']['minute']);
@@ -66,8 +87,8 @@ export class MainComponent implements OnInit {
       obj_1 ? obj_1.y++ : this.data_chart_1.push({y: 1, x: mins});
 
       let name: string = item['request']['method'] ? item['request']['method'] : 'Invalid';
-      let obj_2 = this.data_chart_2.find(o => o.name == name);
-      obj_2 ? obj_2.y++ : this.data_chart_2.push({y: 1, name: name});
+      let obj_2 = this.data_chart_2.find(o => o.label == name);
+      obj_2 ? obj_2.y++ : this.data_chart_2.push({y: 1, label: name});
 
       let obj_3 = this.data_chart_3.find(o => o.label == item['response_code']);
       obj_3 ? obj_3.y++ : this.data_chart_3.push({y: 1, label: item['response_code']});
@@ -79,6 +100,39 @@ export class MainComponent implements OnInit {
       
     }
 
+    // Chart 1
+    let chart_1 = new CanvasJS.Chart('chartContainer1', {
+      theme: 'light2',
+      colorSet: "color_palette",
+      backgroundColor: "transparent",
+      animationEnabled: true,
+      zoomEnabled: true,
+      zoomType: 'xy',
+      title: {
+        text: 'Requests per minute (avg: ' + (Math.round((this.items.length/this.data_chart_1.length) * 100) / 100) + ')',
+        fontSize: 20,
+        margin: 35
+      },
+      data: [{
+        lineColor: "#ff7c43",
+        type: 'line',
+        dataPoints: this.data_chart_1
+      }],
+      axisY: {
+        lineThickness: 1,
+        stripLines: [{
+          value: this.items.length/this.data_chart_1.length,
+          lineDashType: "longDash",
+          thickness: 2,
+          showOnTop: true,
+          color: '#E40071',
+          labelFontColor: '#003f5c',
+          label: 'Average: ' + (Math.round((this.items.length/this.data_chart_1.length) * 100) / 100)
+        }]
+      }
+    });
+
+    // Chart 2
     this.data_chart_2.sort((a, b) => (a.y > b.y) ? 1 : -1);
 
     let chart_2_breaks = [];
@@ -91,31 +145,15 @@ export class MainComponent implements OnInit {
       }
     }
 
-    let chart_1 = new CanvasJS.Chart('chartContainer1', {
-      theme: 'light2',
-      animationEnabled: true,
-      zoomEnabled: true,
-      title: {
-        text: 'Requests per minute (avg: ' + (Math.round((this.items.length/this.data_chart_1.length) * 100) / 100) + ')'
-      },
-      data: [{
-        type: 'line',
-        dataPoints: this.data_chart_1
-      }],
-      axisY: {
-        lineThickness: 1,
-        stripLines: [{
-          value: this.items.length/this.data_chart_1.length,
-          label: 'Average: ' + (Math.round((this.items.length/this.data_chart_1.length) * 100) / 100)
-        }]
-      }
-    });
-
     let chart_2 = new CanvasJS.Chart('chartContainer2', {
       theme: 'light2',
+      colorSet: "color_palette",
+      backgroundColor: "transparent",
       animationEnabled: true,
       title: {
-        text: 'Distribution of HTTP methods'
+        text: 'Distribution of HTTP methods',
+        fontSize: 20,
+        margin: 35
       },
       axisY: {
         scaleBreaks: {
@@ -124,41 +162,54 @@ export class MainComponent implements OnInit {
       },
       data: [{
         type: 'column',
-        tooltipContent: '<b>{name}</b>: {y} - #percent%',
-        indexLabel: '{name}: {y}',
+        tooltipContent: '{label}: {y}',
+        indexLabel: '{y}',
         dataPoints: this.data_chart_2
       }]
     });
 
+    // Chart 3
     let chart_3 = new CanvasJS.Chart('chartContainer3', {
       theme: 'light2',
+      colorSet: "color_palette",
+      backgroundColor: "transparent",
       animationEnabled: true,
       title: {
-        text: 'Distribution of HTTP answer codes'
+        text: 'Distribution of HTTP answer codes',
+        fontSize: 20,
+        margin: 35
       },
       showInLegend: true,
       legendText: '{label}',
       data: [{
+        showInLegend: true,
+        legendText: '{label}',
         type: 'pie',
         toolTipContent: '<b>{label}</b>: {y}',
-        indexLabel: '{label}: #percent%',
+        indexLabel: '{label}: {y}(#percent%)',
         dataPoints: this.data_chart_3
       }]
     });
 
+    // Chart 4
     let chart_4 = new CanvasJS.Chart('chartContainer4', {
       theme: 'light2',
+      colorSet: "color_palette",
+      backgroundColor: "transparent",
       animationEnabled: true,
       axisY :{
         includeZero:false
       },
       title: {
-        text: 'Size of requests with code 200 and size < 1000B'
+        text: 'Size of requests with code 200 and size < 1000B',
+        fontSize: 20,
+        margin: 35
       },
       data: [{
         type: 'spline',
         xValueFormatString: "#B",
-        dataPoints: this.data_chart_4
+        dataPoints: this.data_chart_4,
+        lineColor: "#B83491",
       }]
     });
 
@@ -166,13 +217,7 @@ export class MainComponent implements OnInit {
     chart_2.render();
     chart_3.render();
     chart_4.render();
-
-    console.log(chart_2_breaks);
     
-  }
-
-  redistribute(event) {
-    console.log(event);
   }
 
 }
